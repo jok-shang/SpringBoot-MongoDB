@@ -4,6 +4,7 @@ package com.example.springbootmongodb.entity;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 /**
  * @Author 尚智江
  * @description

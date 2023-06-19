@@ -1,12 +1,15 @@
 package com.example.springbootmongodb;
 
 import com.example.springbootmongodb.entity.User;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -41,48 +44,48 @@ Query对象
 
     // 添加操作
     @Test
-    public void insert(){
+    public void insert() {
         User user = new User();
         user.setAge(18);
         user.setName("bc");
         user.setEmail("123@qq.com");
 //        for (int i= 0;i<10;i++) {
-            User insert = mongoTemplate.insert(user);
+        User insert = mongoTemplate.insert(user);
 //        }
         System.out.println(insert);
     }
 
     // 查询操作
     @Test
-    public void findAll(){
+    public void findAll() {
         List<User> all = mongoTemplate.findAll(User.class);
         System.out.println(all);
     }
 
     // 根据id查询
     @Test
-    public void findById(){
+    public void findById() {
         User byId = mongoTemplate.findById("648b2e3c509cb42dbf90f383", User.class);
         System.out.println(byId);
     }
 
     // 条件查询
     @Test
-    public void findUserList(){
+    public void findUserList() {
         // name=aaa and age=18
         Query query1 = new Query(Criteria.where("name").is("aaa").and("age").is(18));
-        List<User> list = mongoTemplate.find(query1,User.class);
+        List<User> list = mongoTemplate.find(query1, User.class);
         System.out.println(list);
     }
 
     // 模糊查询
     @Test
-    public void findLikeUserList(){
+    public void findLikeUserList() {
         // name like a
         String name = "a";
         // 拼接
-        String regex = String.format("%s%s%s","^.*",name,".*$");
-        Pattern pattern = Pattern.compile(regex,Pattern.CASE_INSENSITIVE);
+        String regex = String.format("%s%s%s", "^.*", name, ".*$");
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Query query = new Query(
                 Criteria.where("name").regex(pattern));
         List<User> list = mongoTemplate.find(query, User.class);
@@ -91,23 +94,53 @@ Query对象
 
     // 分页查询
     @Test
-    public void findPageUserList(){
+    public void findPageUserList() {
         int pageNo = 1;
         int pageSize = 4;
         String name = "a";
 //        // 拼接
-        String regex = String.format("%s%s%s","^.*",name,".*$");
-        Pattern pattern = Pattern.compile(regex,Pattern.CASE_INSENSITIVE);
+        String regex = String.format("%s%s%s", "^.*", name, ".*$");
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Query query = new Query(
                 Criteria.where("name").regex(pattern));
         // 分页构建
         // 查询记录数
-        long count = mongoTemplate.count(query,User.class);
+        long count = mongoTemplate.count(query, User.class);
         // 分页
         List<User> list = mongoTemplate.find(
                 // 当前页-1 乘以每页记录数
                 query.skip((pageNo - 1) * pageSize).limit(pageSize), User.class);
-        System.out.println("记录数"+count);
-        System.out.println("查询结果"+list);
+        System.out.println("记录数" + count);
+        System.out.println("查询结果" + list);
+    }
+
+    // 修改
+    @Test
+    public void update() {
+        // 根据id查询
+        User user = mongoTemplate.findById("648b2e3c509cb42dbf90f383", User.class);
+        // 设置修改值
+        user.setName("asdf");
+        user.setAge(100);
+        user.setEmail("popop@!!!");
+        // 调用方法实现修改
+        Update update = new Update();
+        update.set("name", user.getName());
+        update.set("age", user.getAge());
+        update.set("email", user.getEmail());
+        Query query = new Query(Criteria.where("_id").is(user.getId()));
+        UpdateResult upsert = mongoTemplate.upsert(query, update, User.class);
+        // getModifiedCount修改行数
+        long modifiedCount = upsert.getModifiedCount();
+        System.out.println(modifiedCount);
+    }
+
+    // 删除
+    @Test
+    public void delete() {
+        Query query = new Query(Criteria.where("_id").is("648b2e3c509cb42dbf90f383"));
+        DeleteResult remove = mongoTemplate.remove(query, User.class);
+        long deletedCount = remove.getDeletedCount();
+        System.out.println(deletedCount);
     }
 }
